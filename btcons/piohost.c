@@ -67,16 +67,23 @@ u32 crc32_calc(u8 *buf,u32 len);
 u32 buf[1024*1024/4];
 
 u8  cmd[64];
-HANDLE cmd_h,o_h,i_h;
+
+enum {
+	cmd_h=0,
+	i_h,
+	o_h,
+};
+
+PVOID device;
 u32 is_pro;
 
-write_32bit(u32 m){
+void write_32bit(u32 m){
 	u32 size;
 	cmd[0]=USB_WRITE;
 	cmd[1]=1;
 	cmd[2]=0;
-	WriteFile(cmd_h, cmd, 3, &size, NULL);
-	WriteFile(o_h,&m,4,&size,NULL);
+	usb_pipe_write(device, cmd_h, cmd, 3, &size, NULL);
+	usb_pipe_write(device, o_h,(PUCHAR)&m,4,&size,NULL);
 }
 
 u32 read_32bit(){
@@ -84,45 +91,45 @@ u32 read_32bit(){
 	cmd[0]=USB_READ;
 	cmd[1]=1;
 	cmd[2]=0;
-	WriteFile(cmd_h, cmd, 3, &size, NULL);
-	ReadFile(i_h,&m,4,&size,NULL);
+	usb_pipe_write(device, cmd_h, cmd, 3, &size, NULL);
+	usb_pipe_read(device, i_h, (PUCHAR)&m,4,&size,NULL);
 	return(m);
 }
 
 void write_32bit_n(u32 *m,u32 n){
 	u32 size;
 	cmd[0]=USB_WRITE;
-	cmd[1]=(n);
-	cmd[2]=(n>>8);
-	WriteFile(cmd_h, cmd, 3, &size, NULL);
-	WriteFile(o_h,m,4*n,&size,NULL);
+	cmd[1]=(u8)(n);
+	cmd[2]= (u8)(n>>8);
+	usb_pipe_write(device, cmd_h, cmd, 3, &size, NULL);
+	usb_pipe_write(device, o_h,(PUCHAR)m,4*n,&size,NULL);
 }
 
 void read_32bit_n(u32 *m,u32 n){
 	u32 size;
 	cmd[0]=USB_READ;
-	cmd[1]=(n);
-	cmd[2]=(n>>8);
-	WriteFile(cmd_h, cmd, 3, &size, NULL);
-	ReadFile(i_h,m,4*n,&size,NULL);
+	cmd[1]=(u8)(n);
+	cmd[2]=(u8)(n>>8);
+	usb_pipe_write(device, cmd_h, cmd, 3, &size, NULL);
+	usb_pipe_read(device, i_h,(PUCHAR)m,4*n,&size,NULL);
 }
 
 void bt_cmd(u32 c,u32 p0,u32 p1,u32 p2,u32 *ret,u32 n){
-	u8  cmd[18];
+	u8  cmd2[18];
 	u32 size;
-	cmd[0]=USB_CMD;
-	cmd[1]=4;
-	*((u32 *)(cmd+2))=c;
-	*((u32 *)(cmd+6))=p0;
-	*((u32 *)(cmd+10))=p1;
-	*((u32 *)(cmd+14))=p2;
-	WriteFile(cmd_h, cmd, 18, (LPDWORD)&size, NULL);
+	cmd2[0]=USB_CMD;
+	cmd2[1]=4;
+	*((u32 *)(cmd2+2))=c;
+	*((u32 *)(cmd2+6))=p0;
+	*((u32 *)(cmd2+10))=p1;
+	*((u32 *)(cmd2+14))=p2;
+	usb_pipe_write(device, cmd_h, cmd2, 18, (LPDWORD)&size, NULL);
 	if(n){
-		cmd[0]=USB_READ;
-		cmd[1]=n;
-		cmd[2]=(n>>8);
-		WriteFile(cmd_h, cmd, 3, (LPDWORD)&size, NULL);
-		ReadFile(i_h,ret,4*n,(LPDWORD)&size,NULL);
+		cmd2[0]=USB_READ;
+		cmd2[1]=(u8)n;
+		cmd2[2]=(u8)(n>>8);
+		usb_pipe_write(device, cmd_h, cmd2, 3, (LPDWORD)&size, NULL);
+		usb_pipe_read(device, i_h,(PUCHAR)ret,4*n,(LPDWORD)&size,NULL);
 	}
 }
 
@@ -136,8 +143,8 @@ u32 bt_getmagic(u8 n){
 	u32 ret,size;
 	cmd[0]=USB_STATUS;
 	cmd[1]=n;
-	WriteFile(cmd_h, cmd, 2, (LPDWORD)&size, NULL);
-	ReadFile(i_h,&ret,4,(LPDWORD)&size,NULL);
+	usb_pipe_write(device, cmd_h, cmd, 2, (LPDWORD)&size, NULL);
+	usb_pipe_read(device, i_h,(PUCHAR)&ret,4,(LPDWORD)&size,NULL);
 	return(ret);
 }
 
@@ -149,8 +156,8 @@ void bt_setmagic(u8 n,u32 m){
 	cmd[3]=(u8)(m >> 8);
 	cmd[4]=(u8)(m >> 16);
 	cmd[5]=(u8)(m >> 24);
-	WriteFile(cmd_h, cmd, 6, (LPDWORD)&size, NULL);
-	ReadFile(i_h,&ret,4,(LPDWORD)&size,NULL);
+	usb_pipe_write(device, cmd_h, cmd, 6, (LPDWORD)&size, NULL);
+	usb_pipe_read(device, i_h, (PUCHAR)&ret,4,(LPDWORD)&size,NULL);
 }
 
 void dev_init(){
@@ -159,16 +166,14 @@ void dev_init(){
 
 	if(usb_opened==0){
 		usb_opened=1;
-		if(usb_open()) {
+		device = usb_open();
+		if(device) {
 			printf("Error can't found BootCable USB !!.\n");
 			exit(-1);
 		}
-		cmd_h = usb_pipe_open(0);
-		usb_pipe_reset(cmd_h);
-		o_h = usb_pipe_open(2);
-		usb_pipe_reset(o_h);
-		i_h = usb_pipe_open(1);
-		usb_pipe_reset(i_h);
+		usb_pipe_reset(device, cmd_h);
+		usb_pipe_reset(device, o_h);
+		usb_pipe_reset(device, i_h);
 	}
 
 	//get status
@@ -179,7 +184,7 @@ void dev_init(){
 				break;
 			}
 			else{
-				ReadFile(i_h,&ret,4,(LPDWORD)&size,NULL);
+				usb_pipe_read(device, i_h, (PUCHAR)&ret,4,(LPDWORD)&size,NULL);
 			}
 		}
 		bt_setmagic(2,0);
@@ -195,7 +200,7 @@ void dev_init(){
 void host_proc(s32 mode){//mode 0:normal 1:disconサポート
 	s32 fh;
 	u32 i;
-	u32 cmd,len,flag,where;
+	u32 command,len,flag,where;
 	s8 s[256];
 	for(;;){
 		for(;;){
@@ -205,8 +210,8 @@ void host_proc(s32 mode){//mode 0:normal 1:disconサポート
 			if((i & 0x04)==0) break;
 			Sleep(100);
 		}
-		cmd=read_32bit();
-		switch(cmd){
+		command =read_32bit();
+		switch(command){
 		case 0xf0f0f001://open
 			len=read_32bit();
 			read_32bit_n((void *)s,len);
@@ -265,17 +270,17 @@ void host_proc(s32 mode){//mode 0:normal 1:disconサポート
 			printf("%s",s);
 			break;
 		case 0x5555aaaa:
-			cmd=0;
+			command=0;
 			break;
 		default:
-			cmd=0;
+			command=0;
 			break;
 		}
 	}
 }
 
 int	piohost_main( int argc, char *argv[] ){
-	FILE *fp;
+	FILE *fp = NULL;
 	s32 i,j;
 	s32 mode;
 	s32 len,dev_ofs,dev_len;
@@ -392,17 +397,17 @@ int	piohost_main( int argc, char *argv[] ){
 		cmd[0]=USB_WRITE;
 		cmd[1]=1;
 		cmd[2]=0;
-		WriteFile(cmd_h, cmd, 3, (LPDWORD)&size, NULL);
+		usb_pipe_write(device, cmd_h, cmd, 3, (LPDWORD)&size, NULL);
 		Sleep(50);
-		WriteFile(o_h, (LPCVOID)&len, 4, (LPDWORD)&size, NULL);
+		usb_pipe_write(device, o_h, (LPCVOID)&len, 4, (LPDWORD)&size, NULL);
 		Sleep(50);
 		//PGM本体を渡す
 		cmd[0]=USB_WRITE;
 		cmd[1]=(len+3)/4;
 		cmd[2]=((len+3)/4)>>8;
-		WriteFile(cmd_h, cmd, 3, (LPDWORD)&size, NULL);
+		usb_pipe_write(device, cmd_h, cmd, 3, (LPDWORD)&size, NULL);
 		Sleep(100);
-		WriteFile(o_h, buf, (len+3)/4*4, (LPDWORD)&size, NULL);
+		usb_pipe_write(device, o_h, buf, (len+3)/4*4, (LPDWORD)&size, NULL);
 		Sleep(150);					//wait GBA is up
 
 		if(mode!=MODE_HOST){
@@ -505,8 +510,8 @@ int	piohost_main( int argc, char *argv[] ){
 			cmd[1]=(j+3)/4;
 			cmd[2]=((j+3)/4)>>8;
 			*((u16 *)(cmd+3))=7;
-			WriteFile(cmd_h, cmd, 64, &size, NULL);
-			ReadFile(i_h,buf,((j+3)/4)*4,&size,NULL);
+			usb_pipe_write(device, cmd_h, cmd, 64, &size, NULL);
+			usb_pipe_read(device, i_h,buf,((j+3)/4)*4,&size,NULL);
 			fwrite(buf,1,j,fp);
 			printf("R");
 			dev_len-=j;
@@ -537,8 +542,8 @@ int	piohost_main( int argc, char *argv[] ){
 			cmd[0]=USB_WRITE;
 			cmd[1]=(j+3)/4;
 			cmd[2]=((j+3)/4)>>8;
-			WriteFile(cmd_h, cmd, 3, &size, NULL);
-			WriteFile(o_h,buf,((j+3)/4)*4,&size,NULL);
+			usb_pipe_write(device, cmd_h, cmd, 3, &size, NULL);
+			usb_pipe_write(device, o_h,buf,((j+3)/4)*4,&size,NULL);
 			printf("W");
 			dev_len-=j;
 			if(dev_len==0) break;
@@ -574,8 +579,8 @@ int	piohost_main( int argc, char *argv[] ){
 			cmd[0]=USB_WRITE;
 			cmd[1]=(j+3)/4;
 			cmd[2]=((j+3)/4)>>8;
-			WriteFile(cmd_h, cmd, 3, &size, NULL);
-			WriteFile(o_h,buf,((j+3)/4)*4,&size,NULL);
+			usb_pipe_write(device, cmd_h, cmd, 3, &size, NULL);
+			usb_pipe_write(device, o_h,buf,((j+3)/4)*4,&size,NULL);
 			printf("W");
 			dev_len-=j;
 			if(dev_len==0) break;
@@ -614,8 +619,8 @@ int	piohost_main( int argc, char *argv[] ){
 			cmd[0]=USB_READ;
 			cmd[1]=(u8)(bu_blksize/4);
 			cmd[2]=(bu_blksize/4)>>8;
-			WriteFile(cmd_h, cmd, 3, (LPDWORD)&size, NULL);
-			ReadFile(i_h,buf,bu_blksize,(LPDWORD)&size,NULL);
+			usb_pipe_write(device, cmd_h, cmd, 3, (LPDWORD)&size, NULL);
+			usb_pipe_read(device, i_h,buf,bu_blksize,(LPDWORD)&size,NULL);
 			fwrite(buf,1,bu_blksize,fp);
 			i+=bu_blksize;
 		}
@@ -647,8 +652,8 @@ int	piohost_main( int argc, char *argv[] ){
 			cmd[0]=USB_WRITE;
 			cmd[1]=(u8)(bu_blksize/4);
 			cmd[2]=(bu_blksize/4)>>8;
-			WriteFile(cmd_h, cmd, 3, (LPDWORD)&size, NULL);
-			WriteFile(o_h,buf,bu_blksize,(LPDWORD)&size,NULL);
+			usb_pipe_write(device, cmd_h, cmd, 3, (LPDWORD)&size, NULL);
+			usb_pipe_write(device, o_h,buf,bu_blksize,(LPDWORD)&size,NULL);
 			read_32bit();
 			i+=bu_blksize;
 		}

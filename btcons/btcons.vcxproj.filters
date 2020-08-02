@@ -45,10 +45,10 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="usb.c">
+    <ClCompile Include="piohost.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="piohost.c">
+    <ClCompile Include="usb.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
