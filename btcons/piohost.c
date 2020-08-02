@@ -59,7 +59,6 @@
 #define	MODE_EF		5
 #define	MODE_AF		6
 
-u8 agb_prog[]=
 #include "agb_prog.h"
 
 void crc32_init();
@@ -275,7 +274,7 @@ void host_proc(s32 mode){//mode 0:normal 1:disconサポート
 	}
 }
 
-int	main( int argc, char *argv[] ){
+int	piohost_main( int argc, char *argv[] ){
 	FILE *fp;
 	s32 i,j;
 	s32 mode;
