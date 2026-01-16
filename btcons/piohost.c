@@ -166,12 +166,17 @@ void dev_init(){
 
 	if(usb_opened==0){
 		usb_opened=1;
+		BOOL ret;
 		device = usb_open();
-		if(device) {
+		if(!device) {
 			printf("Error can't found BootCable USB !!.\n");
 			exit(-1);
 		}
-		usb_pipe_reset(device, cmd_h);
+		ret = usb_pipe_reset(device, cmd_h);
+		if (!ret) {
+			printf("Error can't found BootCable USB !!.\n");
+
+		}
 		usb_pipe_reset(device, o_h);
 		usb_pipe_reset(device, i_h);
 	}
@@ -191,8 +196,8 @@ void dev_init(){
 		for(;;){
 			ret=bt_getmagic(0);
 			Sleep(200);
-//			if((ret & 3)==3) break;	//GBA ON
-			if(ret==3) break;	//GBA ON
+			if((ret & 3)==3) break;	//GBA ON
+			//if(ret==3) break;	//GBA ON
 		}
 	}
 }
