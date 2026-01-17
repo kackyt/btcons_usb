@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include <cfgmgr32.h>
+#include <stdio.h>
 
 HRESULT
 RetrieveDevicePath(
@@ -68,6 +69,7 @@ Return value:
     if (INVALID_HANDLE_VALUE == DeviceData->DeviceHandle) {
 
         hr = HRESULT_FROM_WIN32(GetLastError());
+        printf("OpenDevice: CreateFile failed. hr=0x%x\n", hr);
         return hr;
     }
 
@@ -77,6 +79,7 @@ Return value:
     if (FALSE == bResult) {
 
         hr = HRESULT_FROM_WIN32(GetLastError());
+        printf("OpenDevice: WinUsb_Initialize failed. hr=0x%x\n", hr);
         CloseHandle(DeviceData->DeviceHandle);
         return hr;
     }
@@ -177,6 +180,7 @@ Return value:
 
         if (cr != CR_SUCCESS) {
             hr = HRESULT_FROM_WIN32(CM_MapCrToWin32Err(cr, ERROR_INVALID_DATA));
+            printf("RetrieveDevicePath: CM_Get_Device_Interface_List_Size failed. cr=%d, hr=0x%x\n", cr, hr);
             break;
         }
 
@@ -204,7 +208,10 @@ Return value:
         }
     } while (cr == CR_BUFFER_SMALL);
 
+
+
     if (FAILED(hr)) {
+        printf("RetrieveDevicePath: Failed to retrieve device path. hr=0x%x\n", hr);
         return hr;
     }
 
@@ -217,6 +224,7 @@ Return value:
         }
 
         hr = HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+        printf("RetrieveDevicePath: No devices found (List is empty).\n");
         HeapFree(GetProcessHeap(), 0, DeviceInterfaceList);
         return hr;
     }

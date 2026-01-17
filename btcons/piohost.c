@@ -40,16 +40,16 @@
 #define	USB_STATUS		0x03	//return(b0:pow b1:booted)
 #define USB_ACK			0x04	//wlen(1-16)
 
-#define PC_RDONLY		0x0001	//ì«Ç›çûÇ›êÍóp
-#define PC_WRONLY		0x0002	//èëÇ´çûÇ›êÍóp
-#define PC_RDWR			0x0003	//ì«Ç›èëÇ´
-#define PC_APPEND		0x0100	//í«â¡
-#define PC_CREAT		0x0200	//ÉtÉ@ÉCÉãÇçÏê¨Ç∑ÇÈ
-#define PC_TRUNC		0x0400	//ÉtÉ@ÉCÉãÇÃí∑Ç≥ÇÇOÇ…Ç∑ÇÈ
+#define PC_RDONLY		0x0001	//Ë™≠„ÅøËæº„ÅøÂ∞ÇÁî®
+#define PC_WRONLY		0x0002	//Êõ∏„ÅçËæº„ÅøÂ∞ÇÁî®
+#define PC_RDWR			0x0003	//Ë™≠„ÅøÊõ∏„Åç
+#define PC_APPEND		0x0100	//ËøΩÂä†
+#define PC_CREAT		0x0200	//„Éï„Ç°„Ç§„É´„Çí‰ΩúÊàê„Åô„Çã
+#define PC_TRUNC		0x0400	//„Éï„Ç°„Ç§„É´„ÅÆÈï∑„Åï„ÇíÔºê„Å´„Åô„Çã
 
-#define PC_SEEK_SET		0		//ÉtÉ@ÉCÉãÇÃêÊì™Ç©ÇÁ
-#define PC_SEEK_CUR		1		//åªç›ÇÃÉtÉ@ÉCÉãÉ|ÉCÉìÉgÇ©ÇÁ
-#define PC_SEEK_END		2		//ÉtÉ@ÉCÉãÇÃç≈å„Ç©ÇÁ
+#define PC_SEEK_SET		0		//„Éï„Ç°„Ç§„É´„ÅÆÂÖàÈ†≠„Åã„Çâ
+#define PC_SEEK_CUR		1		//ÁèæÂú®„ÅÆ„Éï„Ç°„Ç§„É´„Éù„Ç§„É≥„Éà„Åã„Çâ
+#define PC_SEEK_END		2		//„Éï„Ç°„Ç§„É´„ÅÆÊúÄÂæå„Åã„Çâ
 
 #define	MODE_HOST	0
 #define	MODE_RF		1
@@ -196,13 +196,13 @@ void dev_init(){
 		for(;;){
 			ret=bt_getmagic(0);
 			Sleep(200);
-			if((ret & 3)==3) break;	//GBA ON
+			if((ret & 1)==1) break;	//GBA ON (Relaxed check from &3==3 to &1==1)
 			//if(ret==3) break;	//GBA ON
 		}
 	}
 }
 
-void host_proc(s32 mode){//mode 0:normal 1:disconÉTÉ|Å[Ég
+void host_proc(s32 mode){//mode 0:normal 1:discon„Çµ„Éù„Éº„Éà
 	s32 fh;
 	u32 i;
 	u32 command,len,flag,where;
@@ -211,7 +211,7 @@ void host_proc(s32 mode){//mode 0:normal 1:disconÉTÉ|Å[Ég
 		for(;;){
 			i=bt_getmagic(0);
 			if(mode==1) Sleep(50);
-			if((mode==0)&&((i & 1)==0)) return;		//GBA OFF or ÉPÅ[ÉuÉãÇ™î≤ÇØÇΩ
+			if((mode==0)&&((i & 1)==0)) return;		//GBA OFF or „Ç±„Éº„Éñ„É´„ÅåÊäú„Åë„Åü
 			if((i & 0x04)==0) break;
 			Sleep(100);
 		}
@@ -303,22 +303,22 @@ int	piohost_main( int argc, char *argv[] ){
 		if(argv[1][i]==0) break;
 		argv[1][i]=toupper(argv[1][i]);
 	}
-	if(strcmp(argv[1],"FR")==0){//ÉtÉâÉbÉVÉÖì«Ç›çûÇ›
+	if(strcmp(argv[1],"FR")==0){//„Éï„É©„ÉÉ„Ç∑„É•Ë™≠„ÅøËæº„Åø
 		mode=MODE_RF;
 	}
-	else if(strcmp(argv[1],"FW")==0){//ÉtÉâÉbÉVÉÖèëÇ´çûÇ›
+	else if(strcmp(argv[1],"FW")==0){//„Éï„É©„ÉÉ„Ç∑„É•Êõ∏„ÅçËæº„Åø
 		mode=MODE_WF;
 	}
-	else if(strcmp(argv[1],"FE")==0){//ÉtÉâÉbÉVÉÖè¡ãé
+	else if(strcmp(argv[1],"FE")==0){//„Éï„É©„ÉÉ„Ç∑„É•Ê∂àÂéª
 		mode=MODE_EF;
 	}
-	else if(strcmp(argv[1],"FA")==0){//ÉtÉâÉbÉVÉÖí«ãLèëÇ´çûÇ›
+	else if(strcmp(argv[1],"FA")==0){//„Éï„É©„ÉÉ„Ç∑„É•ËøΩË®òÊõ∏„ÅçËæº„Åø
 		mode=MODE_AF;
 	}
-	else if(strcmp(argv[1],"SR")==0){//SRAMì«Ç›çûÇ›
+	else if(strcmp(argv[1],"SR")==0){//SRAMË™≠„ÅøËæº„Åø
 		mode=MODE_RS;
 	}
-	else if(strcmp(argv[1],"SW")==0){//SRAMèëÇ´çûÇ›
+	else if(strcmp(argv[1],"SW")==0){//SRAMÊõ∏„ÅçËæº„Åø
 		mode=MODE_WS;
 	}
 	else if((argc==2)||(argc==3)){
@@ -398,22 +398,46 @@ int	piohost_main( int argc, char *argv[] ){
 	}
 	dev_init();
 	if(bt_getmagic(1)!=0x12345678){
-		//PGMÇÃí∑Ç≥ÇìnÇ∑
+		//PGM„ÅÆÈï∑„Åï„ÇíÊ∏°„Åô
 		cmd[0]=USB_WRITE;
 		cmd[1]=1;
 		cmd[2]=0;
 		usb_pipe_write(device, cmd_h, cmd, 3, (LPDWORD)&size, NULL);
-		Sleep(50);
-		usb_pipe_write(device, o_h, (LPCVOID)&len, 4, (LPDWORD)&size, NULL);
-		Sleep(50);
-		//PGMñ{ëÃÇìnÇ∑
-		cmd[0]=USB_WRITE;
-		cmd[1]=(len+3)/4;
-		cmd[2]=((len+3)/4)>>8;
-		usb_pipe_write(device, cmd_h, cmd, 3, (LPDWORD)&size, NULL);
 		Sleep(100);
-		usb_pipe_write(device, o_h, buf, (len+3)/4*4, (LPDWORD)&size, NULL);
-		Sleep(150);					//wait GBA is up
+		printf("Sending PGM size (len=%d)...\n", len);
+		if(!usb_pipe_write(device, o_h, (LPCVOID)&len, 4, (LPDWORD)&size, NULL)) {
+			printf("Failed to send PGM size.\n");
+		}
+		Sleep(100);
+		//PGMÊú¨‰Ωì„ÇíÊ∏°„Åô
+		u32 word_count = (len+3)/4;
+		if (word_count > 0xFFFF) {
+			printf("Warning: PGM size %d exceeds protocol limit. Caps to 65535 words (262140 bytes).\n", len);
+			word_count = 0xFFFF;
+			len = word_count * 4; // Adjust len to match the capped word count
+		}
+		cmd[0]=USB_WRITE;
+		cmd[1]=(u8)word_count;
+		cmd[2]=(u8)(word_count>>8);
+		usb_pipe_write(device, cmd_h, cmd, 3, (LPDWORD)&size, NULL);
+		Sleep(200);
+		printf("Sending PGM body...\n");
+		u32 total_sent = 0;
+		u32 pgm_size = (len+3)/4*4;
+		u8 *p_buf = (u8*)buf;
+		while (total_sent < pgm_size) {
+			u32 chunk = 4096;
+			if (total_sent + chunk > pgm_size) chunk = pgm_size - total_sent;
+			
+			if(!usb_pipe_write(device, o_h, p_buf + total_sent, chunk, (LPDWORD)&size, NULL)) {
+				printf("\nFailed to send PGM body at offset %d. size=%d\n", total_sent, chunk);
+				break;
+			}
+			total_sent += size;
+			if (total_sent % (4096 * 4) == 0) printf("."); // Print dot every 16KB
+		}
+		printf("\nPGM body sent: %d / %d bytes.\n", total_sent, pgm_size);
+		Sleep(200);					//wait GBA is up
 
 		if(mode!=MODE_HOST){
 			bt_cmd(CMD_BU_PROBE,0,0,0,(u32 *)&bu_type,1);
@@ -536,6 +560,8 @@ int	piohost_main( int argc, char *argv[] ){
 		}
 		printf("0x%X bytes writeing.\n",dev_len);
 		bt_cmd(CMD_ROM_BWRITE,dev_ofs,dev_len,0,NULL,0);
+		u32 total_len = dev_len;
+		u32 current_written = 0;
 		for(;;){
 			if(dev_len>=0x4000){
 				j=0x4000;
@@ -549,17 +575,21 @@ int	piohost_main( int argc, char *argv[] ){
 			cmd[2]=((j+3)/4)>>8;
 			usb_pipe_write(device, cmd_h, cmd, 3, &size, NULL);
 			usb_pipe_write(device, o_h,buf,((j+3)/4)*4,&size,NULL);
-			printf("W");
+			
+			current_written += j;
+			printf("\rWriting... %d / %d bytes (%.1f%%)", current_written, total_len, (float)current_written / total_len * 100.0f);
+			
 			dev_len-=j;
 			if(dev_len==0) break;
 		}
+		printf("\n");
 		break;
 	case MODE_AF:
 		bt_cmd(CMD_BLANK,0,0,0,&ulen,1);
 		if(dev_len==-1) dev_len=flen;
 		dev_ofs=rom_size-(ulen & 0xffff8000);
 		if(dev_ofs!=0){
-			if(is_pro==0){//PROÇ≈Ç»Ç¢
+			if(is_pro==0){//PRO„Åß„Å™„ÅÑ
 				if((dev_ofs & 0xffc08000)!=(u32)dev_ofs){
 					dev_ofs=(dev_ofs+0x3fffff) & 0xffc00000;
 				}

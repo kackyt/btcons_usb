@@ -17,6 +17,7 @@ typedef struct _DEVICE_DATA {
     BOOL                    HandlesOpen;
     WINUSB_INTERFACE_HANDLE WinusbHandle;
     HANDLE                  DeviceHandle;
+    UCHAR                   PipeIds[32];
     TCHAR                   DevicePath[MAX_PATH];
 
 } DEVICE_DATA, *PDEVICE_DATA;
