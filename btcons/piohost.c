@@ -297,7 +297,7 @@ int	piohost_main( int argc, char *argv[] ){
 	u8  cmd[64];
 	u32 size,discon_mode;
 
-	printf("*********** BOOT CABLE USB CONSOLE TOOL Ver 3.541 ************\n");
+	printf("*********** BOOT CABLE USB CONSOLE TOOL Ver 4.0 ************\n");
 	if(argc<2) goto USAGE;
 	for(i=0;;i++){
 		if(argv[1][i]==0) break;
