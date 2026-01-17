@@ -12,7 +12,7 @@ Boot Cable USBを使用してPCとゲームボーイアドバンス(GBA)を接�
 ## 動作環境
 
 - Windows 10 / 11 (64bit)
-- Visual Studio 2022 (または Build Tools 2022)
+- Visual Studio 2022 (または 2026)
 
 ## ビルド方法
 
