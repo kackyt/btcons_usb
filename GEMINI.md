@@ -31,6 +31,16 @@ Error can't found BootCable USB !!
 
 
 *********** BOOT CABLE USB CONSOLE TOOL Ver 3.541 ************
-Start=0x%X  0x%X bytes writeing
+Endpoint index: 0 Pipe type: Bulk Pipe ID: 0x1 (Timeout set, AutoClearStall).
+ -> Mapped to cmd_h (0)
+Endpoint index: 1 Pipe type: Bulk Pipe ID: 0x82 (Timeout set, AutoClearStall).
+ -> Mapped to i_h (1)
+Endpoint index: 2 Pipe type: Bulk Pipe ID: 0x2 (Timeout set, AutoClearStall).
+ -> Mapped to o_h (2)
+Sending PGM size (len=262144)...
+Warning: PGM size 262144 exceeds protocol limit. Caps to 65535 words (262140 bytes).
+Sending PGM body...
+...............
+PGM body sent: 262140 / 262140 bytes.
 
 といった表示がされれば成功
